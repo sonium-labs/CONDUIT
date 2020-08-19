@@ -1,11 +1,11 @@
 /// <reference path="./p5.global-mode.d.ts" />
-let song;
+let sample;
 let modulator; // this oscillator will modulate the amplitude of the carrier
 let fft; // we'll visualize the waveform
 
 function preload() {
   // Load a sound file
-  song = loadSound('jul.mp3');
+  sample = loadSound('jul.mp3');
 }
 
 function setup() {
@@ -14,6 +14,16 @@ function setup() {
   background(30);
 
   // KNOBS
+  // These are the 9 parameters that need to be passed to the MakeKnob function:
+
+  // imgSrc - Set the image source in the first parameter. example: "knob.png" or "images/knob.png"
+  // diameter - Set knob size. Just a number (but refers to pixels)
+  // locx, locy - Set the location on the canvas horizontal and vertical pixel coordinates.
+  // lowNum, hiNum - Set the range of values returned. Floating point numbers.
+  // defaultNum - Sets the default value of the knob. DO NOT set a frequency knob to 0. Amplitude can be 0.
+  // numPlaces - Refers to the displayed value below the knob. Sets the number of decimal places to display. 
+  //  - Does not affect the actual value returned.
+  // label - the text to display below the knob. example: "Frequency"
   masterKnob = new MakeKnobC("white", 100, 100, 100, 0, 1, .5, 2, "Amplitude", "white", 12);
   speedKnob = new MakeKnobC("white", 100, 200, 100, -5, 5, 0, 2, "Speed", "white", 12);
   modKnob = new MakeKnobC("white", 100, 400, 100, 0, 1, .5, 2, "Mod Amplitude", "white", 12);
@@ -26,25 +36,25 @@ function setup() {
   modulator.start();
 
   // Modulate the carrier's amplitude with the modulator
-  song.amp(modulator.scale(-1, 1, 1, -1));
+  sample.amp(modulator.scale(-1, 1, 1, -1));
 
   // create an fft to analyze the audio
   fft = new p5.FFT();
 
   // Loop the sound forever
   // (well, at least until stop() is called)
-  //song.play();
-  song.loop();
+  //sample.play();
+  sample.loop();
 }
 
 function draw() {
   background(30, 30, 30, 100); // alpha
 
   // Set the volume to a range between 0 and 1.0
-  song.amp(masterKnob.knobValue);
+  sample.amp(masterKnob.knobValue);
 
   // Set the rate to a range between 0.1 and 4
-  song.rate(speedKnob.knobValue);
+  sample.rate(speedKnob.knobValue);
 
   // map mouseY to moodulator freq between 0 and 20hz
   let modFreq = map(freqKnob.knobValue, 0, 20, 0, 20);
@@ -60,7 +70,7 @@ function draw() {
   drawWaveform();
 
   //drawText(modFreq, modAmp);
-  
+
   //draw/update all knobs
   masterKnob.update();
   speedKnob.update();
@@ -86,16 +96,16 @@ function drawText(modFreq, modAmp) {
   text('Modulator Amplitude: ' + modAmp.toFixed(3), 20, 40);
 }
 
-function mousePressed() { 
-  masterKnob.active(); 
-  speedKnob.active(); 
+function mousePressed() {
+  masterKnob.active();
+  speedKnob.active();
   modKnob.active();
   freqKnob.active();
 }
 
-function mouseReleased() { 
-  masterKnob.inactive(); 
-  speedKnob.inactive(); 
+function mouseReleased() {
+  masterKnob.inactive();
+  speedKnob.inactive();
   modKnob.inactive();
   freqKnob.inactive();
 }
