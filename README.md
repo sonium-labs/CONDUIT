@@ -1,3 +1,3 @@
 # CONDUIT
 
-CONDUIT is a web-based granular synthesizer/sampler written using the p5.js library.
+CONDUIT is a web-based granular synthesizer/sampler built using the p5.js library.
