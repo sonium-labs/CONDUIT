@@ -1,33 +1,42 @@
+// Enable p5.js Intellisense using typescript definition file
 /// <reference path="./p5.global-mode.d.ts" />
-let sample;
-let modulator; // this oscillator will modulate the amplitude of the carrier
-let fft; // we'll visualize the waveform
-
+let sample;         // current sample
+let modulator;      // osc to modulate the amplitude of the carrier
+let fft;            // used to visualize the waveform
+let loopStart       // holds start of loop (in seconds)
+let loopCue;        // holds length of loop (in seconds)
+let prevLoopStart;  // holds previous start of loop (in seconds)
+let prevLoopCue;    // holds previous length of loop (in seconds)
 function preload() {
   // Load a sound file
   sample = loadSound('jul.mp3');
 }
 
 function setup() {
-  createCanvas(600, 400);
+  createCanvas(900, 400);
   noFill();
   background(30);
 
   // KNOBS
   // These are the 9 parameters that need to be passed to the MakeKnob function:
-
-  // imgSrc - Set the image source in the first parameter. example: "knob.png" or "images/knob.png"
-  // diameter - Set knob size. Just a number (but refers to pixels)
+  /////////////////////////////////////
+  // knobColor - use a word in quotes "red" or rgb value in brackets [255,0,0] or rgba [0,255,255,100]
+  // diameter - Set knob size in pixels. Integer
   // locx, locy - Set the location on the canvas horizontal and vertical pixel coordinates.
-  // lowNum, hiNum - Set the range of values returned. Floating point numbers.
+  // lowNum, hiNum - Set the range of values returned. Floating point numbers are ok.
   // defaultNum - Sets the default value of the knob. DO NOT set a frequency knob to 0. Amplitude can be 0.
   // numPlaces - Refers to the displayed value below the knob. Sets the number of decimal places to display. 
-  //  - Does not affect the actual value returned.
-  // label - the text to display below the knob. example: "Frequency"
+  //  - Does not affect the actual value returned which is a float.
+  // labelText - the text to display below the knob. example: "Frequency"
+  // textColor - sets the color of the label and display value text; 
+  //  - use a color word in quotes "cyan" or rgb or rgba value in brackets [255,0,0] [200,150,100,150]
+  // textPt - enter a number (ie. 18) for the size of the type - sets return value and label text size
   masterKnob = new MakeKnobC("white", 100, 100, 100, 0, 1, .5, 2, "Amplitude", "white", 12);
   speedKnob = new MakeKnobC("white", 100, 200, 100, -5, 5, 0, 2, "Speed", "white", 12);
   modKnob = new MakeKnobC("white", 100, 400, 100, 0, 1, .5, 2, "Mod Amplitude", "white", 12);
   freqKnob = new MakeKnobC("white", 100, 500, 100, 0, 20, 0, 2, "Mod Freq", "white", 12);
+  loopStartKnob = new MakeKnobC("white", 100, 700, 100, 0, 10, 0, 2, "Loop Start", "white", 12);
+  loopDurKnob = new MakeKnobC("white", 100, 800, 100, 0, 10, 0, 2, "Loop Duration", "white", 12);
 
   modulator = new p5.Oscillator('triangle');
   modulator.disconnect(); // disconnect the modulator from master output
@@ -52,13 +61,14 @@ function draw() {
   // Set the volume to a range between 0 and 1.0
   sample.amp(masterKnob.knobValue);
 
-  // Set the rate to a range between 0.1 and 4
+  // Set the rate to a range between -5 and 5.0
   sample.rate(speedKnob.knobValue);
 
-  // map mouseY to moodulator freq between 0 and 20hz
+  // Set the modulator freq to a range between 0 and 20hz
   let modFreq = map(freqKnob.knobValue, 0, 20, 0, 20);
   modulator.freq(freqKnob.knobValue);
 
+  // Set the modulator amplitude to a range between 0 and 1.0
   let modAmp = map(modKnob.knobValue, 0, 1, 0, 1);
   modulator.amp(modAmp, 0.01); // fade time of 0.1 for smooth fading
 
@@ -68,15 +78,26 @@ function draw() {
   // draw the shape of the waveform
   drawWaveform();
 
-  //drawText(modFreq, modAmp);
+  // Set loop start value based on knob position
+  loopStart = loopStartKnob.knobValue;
+  // if loop start value has changed, play sample again
+  if(loopStart != prevLoopStart) {
+    sample.play();
+  }
 
   //draw/update all knobs
   masterKnob.update();
   speedKnob.update();
   modKnob.update();
   freqKnob.update();
+  loopStartKnob.update();
+  loopDurKnob.update();
 }
 
+function loopCtrl() {
+  sample.clearCues();
+  sample.addCue(loopCue, sample.jump(loopStartKnob.knobValue));
+}
 function drawWaveform() {
   stroke(240);
   strokeWeight(1);
@@ -100,6 +121,8 @@ function mousePressed() {
   speedKnob.active();
   modKnob.active();
   freqKnob.active();
+  loopStartKnob.active();
+  loopDurKnob.active();
 }
 
 function mouseReleased() {
@@ -107,4 +130,6 @@ function mouseReleased() {
   speedKnob.inactive();
   modKnob.inactive();
   freqKnob.inactive();
+  loopStartKnob.inactive();
+  loopDurKnob.inactive();
 }
