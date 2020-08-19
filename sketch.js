@@ -1,6 +1,5 @@
 /// <reference path="./p5.global-mode.d.ts" />
 let song;
-let carrier; // this is the oscillator we will hear
 let modulator; // this oscillator will modulate the amplitude of the carrier
 let fft; // we'll visualize the waveform
 
