@@ -1,14 +1,13 @@
 // Enable p5.js Intellisense using typescript definition file
 /// <reference path="./p5.global-mode.d.ts" />
-var sample;         // current sample
-var modulator;      // osc to modulate the amplitude of the carrier
-var fft;            // used to visualize the waveform
-var loopStart = 0;       // holds start of loop (in seconds)
-var loopDur = 1;        // holds length of loop (in seconds)
-var prevLoopStart;  // holds previous start of loop (in seconds)
-var prevLoopDur;    // holds previous length of loop (in seconds)
-var loopCue;        // holds overall loopCue time
-var i = 0;
+let sample;         // current sample
+let modulator;      // osc to modulate the amplitude of the carrier
+let fft;            // used to visualize the waveform
+let loopStart       // holds start of loop (in seconds)
+let loopDur;        // holds length of loop (in seconds)
+let prevLoopStart;  // holds previous start of loop (in seconds)
+let prevLoopDur;    // holds previous length of loop (in seconds)
+let loopCue;        // holds overall loopCue time
 function preload() {
   // Load a sound file
   sample = loadSound('jul.mp3');
@@ -18,8 +17,7 @@ function setup() {
   createCanvas(900, 400);
   noFill();
   background(30);
-  
-  
+
   // KNOBS
   // These are the 9 parameters that need to be passed to the MakeKnob function:
   /////////////////////////////////////
@@ -55,16 +53,11 @@ function setup() {
 
   // Loop the sound forever
   // (well, at least until stop() is called)
-  sample.playMode('restart');
   sample.loop();
-  
-  //jumploop();
-  //sample.addCue(2, jumploop);
-  //loopCtrl();
 }
 
 function draw() {
-  background(30, 30, 30, 255); // alpha
+  background(30, 30, 30, 100); // alpha
 
   // Set the volume to a range between 0 and 1.0
   sample.amp(masterKnob.knobValue);
@@ -84,26 +77,36 @@ function draw() {
   waveform = fft.waveform();
 
   // draw the shape of the waveform
-  drawWaveform();
+  //drawWaveform();
 
   // Set loop values based on knob position
   loopStart = loopStartKnob.knobValue;
-  loopDur = loopDurKnob.knobValue;
-  
+  loopDur = loopDurKnob.knobValue
   // if loop start value has changed, play sample again
-  // if (loopStart != prevLoopStart) {
-  //   prevLoopStart = loopStart;
-  //   //sample.jump(loopStart);
-  //   //sample.stop();
-  //   //sample.play(loopStart);
-  //   loopCtrl();
-  // }
+  if (loopStart != prevLoopStart) {
+    prevLoopStart = loopStart;
+    //sample.jump(loopStart);
+    sample.jump(loopStart);
+    loopCtrl();
+  }
 
-  // if (loopDur != prevLoopDur) {
-  //   prevLoopDur = loopDur;
-  //   //sample.jump(loopStart);
-  //   loopCtrl();
-  // }
+  if (loopDur != prevLoopDur) {
+    prevLoopDur = loopDur;
+    sample.jump(1);
+    loopCtrl();
+  }
+
+  function loopCtrl() {
+    loopCue = loopStart + loopDur;
+    console.log(loopCue);
+    sample.clearCues();
+    sample.addCue(2, jumper);
+  }
+
+  function jumper() {
+    sample.jump(1);
+  }
+
 
   //draw/update all knobs
   masterKnob.update();
@@ -112,49 +115,29 @@ function draw() {
   freqKnob.update();
   loopStartKnob.update();
   loopDurKnob.update();
-  
-  // Debug text
-  text('Current position: ' + sample.currentTime().toFixed(2) + ' Sec', 100, 20);
-  text('Loop start time: ' + loopStart.toFixed(2) + ' Sec', 300, 20);
 }
 
-function loopCtrl() {
-  jumpLoop();
-  loopCue = loopStart + loopDur;
-  console.log(loopCue);
-  sample.clearCues();
-  sample.addCue(loopCue, jumpLoop);
-  console.log("Cue added!");
-}
+// function drawWaveform() {
+//   stroke(240);
+//   strokeWeight(1);
+//   beginShape();
+//   for (let i = 0; i < waveform.length; i++) {
+//     let x = map(i, 0, waveform.length, 0, width);
+//     let y = map(waveform[i], -1, 1, -height / 2, height / 2);
+//     vertex(x, y + 300);
+//   }
+//   endShape();
+// }
 
-function jumpLoop() {
-  //sample.stop();
-  // Debug:
-  console.log("Jump!" + i++);
-  sample.jump(loopStart);
-}
-
-function drawWaveform() {
-  stroke(240);
-  strokeWeight(1);
-  beginShape();
-  for (let i = 0; i < waveform.length; i++) {
-    let x = map(i, 0, waveform.length, 0, width);
-    let y = map(waveform[i], -1, 1, -height / 2, height / 2);
-    vertex(x, y + 300);
-  }
-  endShape();
-}
-
-function drawText(modFreq, modAmp) {
-  strokeWeight(1);
-  text('Modulator Frequency: ' + modFreq.toFixed(3) + ' Hz', 20, 20);
-  text('Modulator Amplitude: ' + modAmp.toFixed(3), 20, 40);
-}
+// function drawText(modFreq, modAmp) {
+//   strokeWeight(1);
+//   text('Modulator Frequency: ' + modFreq.toFixed(3) + ' Hz', 20, 20);
+//   text('Modulator Amplitude: ' + modAmp.toFixed(3), 20, 40);
+// }
 
 function mousePressed() {
   // pause sample while parameters are being changed
-  sample.stop();
+  // sample.stop();
   // enable all knobs
   masterKnob.active();
   speedKnob.active();
@@ -167,7 +150,7 @@ function mousePressed() {
 function mouseReleased() {
   // resume sample when parameters are set
   // sample.jump(loopStart);
-  loopCtrl();
+  // sample.play();
   // disable all knobs
   masterKnob.inactive();
   speedKnob.inactive();
