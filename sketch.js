@@ -4,7 +4,7 @@ var sample;         // current sample
 var modulator;      // osc to modulate the amplitude of the carrier
 var fft;            // used to visualize the waveform
 var loopStart = 0;       // holds start of loop (in seconds)
-var loopDur = 1;        // holds length of loop (in seconds)
+var loopDur = 2;        // holds length of loop (in seconds)
 var prevLoopStart;  // holds previous start of loop (in seconds)
 var prevLoopDur;    // holds previous length of loop (in seconds)
 var loopCue;        // holds overall loopCue time
@@ -39,7 +39,7 @@ function setup() {
   modKnob = new MakeKnobC("black", 100, 400, 100, 0, 1, .5, 2, "Mod Amplitude", "white", 12);
   freqKnob = new MakeKnobC("black", 100, 500, 100, 0, 20, 0, 2, "Mod Freq", "white", 12);
   loopStartKnob = new MakeKnobC("black", 100, 700, 100, 0, 10, 0, 2, "Loop Start", "white", 12);
-  loopDurKnob = new MakeKnobC("black", 100, 800, 100, .1, 10, 1, 2, "Loop Duration", "white", 12);
+  loopDurKnob = new MakeKnobC("black", 100, 800, 100, .1, 10, 2, 2, "Loop Duration", "white", 12);
 
   modulator = new p5.Oscillator('triangle');
   modulator.disconnect(); // disconnect the modulator from master output
@@ -60,7 +60,7 @@ function setup() {
   
   //jumploop();
   //sample.addCue(2, jumploop);
-  //loopCtrl();
+  loopCtrl();
 }
 
 function draw() {
@@ -114,8 +114,9 @@ function draw() {
   loopDurKnob.update();
   
   // Debug text
-  text('Current position: ' + sample.currentTime().toFixed(2) + ' Sec', 100, 20);
-  text('Loop start time: ' + loopStart.toFixed(2) + ' Sec', 300, 20);
+  text('Debug: ', 300, 20);
+  text('Current position: ' + sample.currentTime().toFixed(2) + ' Sec', 400, 20);
+  text('Loop end time: ' + loopCue.toFixed(2) + ' Sec', 550, 20);
 }
 
 function loopCtrl() {
