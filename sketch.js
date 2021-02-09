@@ -10,13 +10,30 @@ var prevLoopDur;    // holds previous length of loop (in seconds)
 var loopCue;        // holds overall loopCue time
 var i = 0;
 var revEnable = 1;  
+var isHovering = false;
+var isPlaying = false;
+var env;
+var attackTime, attackLevel, decayTime, decayLevel; //Levels from 0.0 to 1.0, Times in seconds
 function preload() {
   // Load a sound file
   sample = loadSound('jul.mp3');
 }
 
+function hoverOver() {
+  isHovering = true;
+}
+
+function hoverLeave() {
+  isHovering = false;
+}
+
 function setup() {
-  createCanvas(900, 400);
+  let c = createCanvas(900, 400);
+  c.dragOver(hoverOver);
+  c.dragLeave(hoverLeave);
+  c.drop(gotFile);
+
+  //env = new p5.Envelope();
   noFill();
   background(30);
   
@@ -34,12 +51,12 @@ function setup() {
   // textColor - sets the color of the label and display value text; 
   //  - use a color word in quotes "cyan" or rgb or rgba value in brackets [255,0,0] [200,150,100,150]
   // textPt - enter a number (ie. 18) for the size of the type - sets return value and label text size
-  masterKnob = new MakeKnobC("black", 100, 100, 100, 0, 1, .5, 2, "Amplitude", "white", 12);
+  masterKnob = new MakeKnobC("black", 100, 100, 100, 0, 1, 0.5, 2, "Amplitude", "white", 12);
   speedKnob = new MakeKnobC("black", 100, 200, 100, 0, 5, 1, 2, "Speed", "white", 12);
-  modKnob = new MakeKnobC("black", 100, 400, 100, 0, 1, .5, 2, "Mod Amplitude", "white", 12);
+  modKnob = new MakeKnobC("black", 100, 400, 100, 0, 1, 0.5, 2, "Mod Amplitude", "white", 12);
   freqKnob = new MakeKnobC("black", 100, 500, 100, 0, 20, 0, 2, "Mod Freq", "white", 12);
   loopStartKnob = new MakeKnobC("black", 100, 700, 100, 0, 10, 0, 2, "Loop Start", "white", 12);
-  loopDurKnob = new MakeKnobC("black", 100, 800, 100, .1, 10, 2, 2, "Loop Duration", "white", 12);
+  loopDurKnob = new MakeKnobC("black", 100, 800, 100, 0.1, 10, 2, 2, "Loop Duration", "white", 12);
 
   modulator = new p5.Oscillator('triangle');
   modulator.disconnect(); // disconnect the modulator from master output
@@ -63,7 +80,7 @@ function setup() {
 
   // Start/Stop Buttons
   var startButton = createButton("Start");
-  startButton.mousePressed(jumpLoop);
+  startButton.mousePressed(startSamp);
   startButton.position(0, height);
   var stopButton = createButton("Stop");
   stopButton.mousePressed(stopSamp);
@@ -77,10 +94,15 @@ function setup() {
   loopCtrl();
 }
 // Don't ask me why the button needs this to function...
+function startSamp() {
+  loopCtrl();
+  jumpLoop();
+  isPlaying = true;
+}
 function stopSamp() {
   sample.stop();
+  isPlaying = false;
 }
-
 // Negates Sample Rate (changes direction of playback)
 function revSamp() {
   revEnable *= -1;
@@ -129,16 +151,9 @@ function draw() {
   text('Loop duration: ' + loopDur.toFixed(2) + ' Sec', 600, 20);
   text('Loop Diff: ' + abs(loopStart - loopDur).toFixed(2) + ' Sec', 800, 20);
 
-  // Ensures sample pointer cannot leave loop
-    if(revEnable == 1 && sample.currentTime() > loopCue) 
-    {
-      jumpLoop();
-    } 
-    else if(revEnable == -1 && sample.currentTime() < sample.duration() - loopCue) 
-    {
-      jumpLoop();
-    }
-
+  if(isHovering) {
+    text("Drop file?", width/2, 350)
+  }
 }
 
 function loopCtrl() {
@@ -193,6 +208,12 @@ function mouseReleased() {
   loopDurKnob.inactive();
 }
 
+function gotFile(file) {
+  sample.stop();
+  isHovering = false;
+  sample = loadSound(file.data);
+  text(file.name, 150, height-20);
+}
 // Mostly unchanged from knob function, but added some sample logic to mouse on events near bottom of function
 function MakeKnobC(knobColor, diameter, locx, locy, lowNum, hiNum, defaultNum, numPlaces, labelText, textColor, textPt) {
   this.pos = createVector(0,0);
@@ -278,14 +299,25 @@ function MakeKnobC(knobColor, diameter, locx, locy, lowNum, hiNum, defaultNum, n
     } else {
       this.isClickedOn = false;
     }
-  }
+  };
   
   this.inactive = function() {
     this.currentRot=this.rotateMe;
     if(this.isClickedOn) {          // added to update loop values when knob is updated
       loopCtrl();
+        // Ensures sample pointer cannot leave loop
+      if(isPlaying) {
+        if(revEnable == 1 && ((sample.currentTime() > loopCue) || (sample.currentTime() < loopStart) ))
+        {
+          jumpLoop();
+        } 
+        else if(revEnable == -1 && (sample.currentTime() < sample.duration() - loopCue) || sample.currentTime() > sample.duration() - loopStart)
+        {
+          jumpLoop();
+        }
+      }
     }
     this.isClickedOn = false;
     cursor('default');
-  }
+  };
 }
