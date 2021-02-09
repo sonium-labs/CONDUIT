@@ -12,11 +12,13 @@ var i = 0;
 var revEnable = 1;  
 var isHovering = false;
 var isPlaying = false;
-var env;
-var attackTime, attackLevel, decayTime, decayLevel; //Levels from 0.0 to 1.0, Times in seconds
+
+var sampleB;
+
 function preload() {
   // Load a sound file
   sample = loadSound('jul.mp3');
+  sampleB = loadSound('jul.mp3');
 }
 
 function hoverOver() {
@@ -33,7 +35,6 @@ function setup() {
   c.dragLeave(hoverLeave);
   c.drop(gotFile);
 
-  //env = new p5.Envelope();
   noFill();
   background(30);
   
@@ -52,7 +53,7 @@ function setup() {
   //  - use a color word in quotes "cyan" or rgb or rgba value in brackets [255,0,0] [200,150,100,150]
   // textPt - enter a number (ie. 18) for the size of the type - sets return value and label text size
   masterKnob = new MakeKnobC("black", 100, 100, 100, 0, 1, 0.5, 2, "Amplitude", "white", 12);
-  speedKnob = new MakeKnobC("black", 100, 200, 100, 0, 5, 1, 2, "Speed", "white", 12);
+  speedKnob = new MakeKnobC("black", 100, 200, 100, 0.1, 5, 1, 2, "Speed", "white", 12);
   modKnob = new MakeKnobC("black", 100, 400, 100, 0, 1, 0.5, 2, "Mod Amplitude", "white", 12);
   freqKnob = new MakeKnobC("black", 100, 500, 100, 0, 20, 0, 2, "Mod Freq", "white", 12);
   loopStartKnob = new MakeKnobC("black", 100, 700, 100, 0, 10, 0, 2, "Loop Start", "white", 12);
@@ -97,10 +98,13 @@ function setup() {
 function startSamp() {
   loopCtrl();
   jumpLoop();
+  sampleB.stop();
+  sampleB.jump(loopCue);
   isPlaying = true;
 }
 function stopSamp() {
   sample.stop();
+  sampleB.stop();
   isPlaying = false;
 }
 // Negates Sample Rate (changes direction of playback)
@@ -116,6 +120,7 @@ function draw() {
 
   // Set the rate to a range between -5 and 5.0
   sample.rate(speedKnob.knobValue * revEnable);
+  sampleB.rate(speedKnob.knobValue * revEnable);
 
   // Set the modulator freq to a range between 0 and 20hz
   //let modFreq = map(freqKnob.knobValue, 0, 20, 0, 20);
@@ -157,16 +162,28 @@ function draw() {
 }
 
 function loopCtrl() {
-  loopCue = loopStart + loopDur;
+  loopCue = loopStart + loopDur/2;
   console.log(loopCue);
   sample.clearCues();
-  sample.addCue(loopCue, jumpLoop);
+  sample.addCue(loopCue, jumpLoopB);
+  //TEST
+  sampleB.clearCues();
+  sampleB.addCue(loopCue, jumpLoop);
+  //
   console.log("Cue added!");
 }
 
 function jumpLoop() {
-  console.log("Jump!" + i++);
+  console.log("Jump to A!" + i++);
+  sample.stop();
   sample.jump(loopStart);
+
+}
+
+function jumpLoopB() {
+  console.log("Jump to B!" + i++);
+  sampleB.stop();
+  sampleB.jump(loopStart);
 }
 
 function drawWaveform() {
@@ -212,7 +229,7 @@ function gotFile(file) {
   sample.stop();
   isHovering = false;
   sample = loadSound(file.data);
-  text(file.name, 150, height-20);
+  sampleB = loadSound(file.data);
 }
 // Mostly unchanged from knob function, but added some sample logic to mouse on events near bottom of function
 function MakeKnobC(knobColor, diameter, locx, locy, lowNum, hiNum, defaultNum, numPlaces, labelText, textColor, textPt) {
@@ -306,16 +323,16 @@ function MakeKnobC(knobColor, diameter, locx, locy, lowNum, hiNum, defaultNum, n
     if(this.isClickedOn) {          // added to update loop values when knob is updated
       loopCtrl();
         // Ensures sample pointer cannot leave loop
-      if(isPlaying) {
-        if(revEnable == 1 && ((sample.currentTime() > loopCue) || (sample.currentTime() < loopStart) ))
-        {
-          jumpLoop();
-        } 
-        else if(revEnable == -1 && (sample.currentTime() < sample.duration() - loopCue) || sample.currentTime() > sample.duration() - loopStart)
-        {
-          jumpLoop();
-        }
-      }
+      // if(isPlaying) {
+      //   if(revEnable == 1 && ((sample.currentTime() > loopCue) || (sample.currentTime() < loopStart) ))
+      //   {
+      //     jumpLoop();
+      //   } 
+      //   else if(revEnable == -1 && (sample.currentTime() < sample.duration() - loopCue) || sample.currentTime() > sample.duration() - loopStart)
+      //   {
+      //     jumpLoop();
+      //   }
+      // }
     }
     this.isClickedOn = false;
     cursor('default');
